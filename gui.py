@@ -4,6 +4,7 @@ from tkinter import *
 from tkcalendar import *
 from datetime import datetime
 import db_utils as db
+import f_utils as file_export
 
 root = Tk()
 root.title("Data Dump")
@@ -29,7 +30,7 @@ def show_datepickers():
         selectmode="day",
         year=now.year,
         month=now.month,
-        day=now.day,
+        day=now.day
     )
     end_cal.grid(row=5, column=2, columnspan=2, sticky=W)
     end_label = Label(root, text="Until:")
@@ -37,9 +38,17 @@ def show_datepickers():
 
 
 def fetch_all():
-    result = db.all_attendances()
-    for i in result:
-        print(f"{i}\n{result[i]}")
+    data = db.all_attendances()
+    if file_export.write_to_csv(data):
+        message = Label(root, text="Attendance Sheet Created!")
+    else:
+        message = Label(root, text="Something Went Wrong!")
+    message.grid(row=6, column=1)
+    if file_export.write_to_html(data):
+        message1 = Label(root, text="Attendance Page Created!")
+    else:
+        message1 = Label(root, text="Something Went Wrong!")
+    message1.grid(row=7, column=1)
 
 
 instruction = Label(root, text="Please Select:")
