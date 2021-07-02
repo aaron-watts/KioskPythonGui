@@ -14,23 +14,34 @@ dumps_collection = db.dumps
 # any_id = ObjectId(attendances_collection.find_one({})['member'])
 # print(members_collection.find_one({"_id": any_id})["firstName"])
 
-# Loop through ALL attendances and collect associated member data
-def all_attendances():
+def get_data(query):
     attendance_records = {}
-    for attendance in attendances_collection.find({}):
+    for attendance in attendances_collection.find(query):
+        # populate members
         member_id = ObjectId(attendance["member"])
         member = members_collection.find_one({"_id": member_id})
-        date_attended = str(attendance["datetime"])
-        this_key = f"{date_attended[:4]}-{date_attended[5:7]}-{date_attended[8:10]}_{date_attended[11:13]}:00"
         name = f'{member["firstName"]} {member["lastName"]}'
         dob = f'{str(member["dob"])[8:10]}/{str(member["dob"])[5:7]}/{str(member["dob"])[:4]}'
         address = f'{member["address"]} {member["postcode"]}'
+        # create dictionary keys using datetime
+        date_attended = str(attendance["datetime"])
+        this_key = f"{date_attended[:4]}-{date_attended[5:7]}-{date_attended[8:10]}_{date_attended[11:13]}:00"
         if this_key not in attendance_records:
             attendance_records[this_key] = []
+        # append members to dictionary list
         attendance_records[this_key].append(
             {"name": name, "dob": dob, "address": address}
         )
     return attendance_records
+
+def all_attendances():
+    query = {}
+    return get_data(query)
+
+def specified_dates(start, finish):
+    query = {"datetime": {"$gte": start, "$lte": finish}}
+    return get_data(query)
+    
 
 # Add dump to database
 def record_dump(dump_type, dump_date):
