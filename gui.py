@@ -12,6 +12,7 @@ root.geometry("600x600")
 
 
 def show_datepickers():
+    disable_buttons()
     global start_cal, end_cal, confirm_button, start_label, end_label
     now = datetime.now()
     start_cal = Calendar(
@@ -46,14 +47,19 @@ def close_datepicker():
     end_label.destroy()
     confirm_button.destroy()
 
-def feedback(data):
+def disable_buttons():
+    button1.config(state="disabled")
+    button2.config(state="disabled")
+    button3.config(state="disabled")
+
+def write_and_feedback(data):
     if file_export.write_to_csv(data):
         csv_feedback = "Atendance Sheet Created!"
     else:
         csv_feedback = "Error: file_export.write_to_csv(data)"
     csv_display = Label(root, text=csv_feedback)
     csv_display.grid(row=6, column=1, columnspan=3)
-    
+
     if file_export.write_to_html(data):
         html_feedback = "Attendance Page Created!"
     else:
@@ -73,13 +79,27 @@ def log_dump(dump_type):
 
 
 def fetch_all():
-    data = db.all_attendances()
-    feedback(data)
+    disable_buttons()
+    data = db.get_data({})
+    write_and_feedback(data)
     log_dump("all")
 
 
 def since_last_dump():
-    pass
+    disable_buttons()
+    last_dump = db.get_last_dump()
+    if last_dump:
+        dump_date = datetime(
+            int(last_dump.strftime("%Y")), 
+            int(last_dump.strftime("%m")), 
+            int(last_dump.strftime("%d"))
+            )
+        query = {"datetime": {"$gte": dump_date}}
+        data = db.get_data(query)
+    else:
+        data = db.get_data({})
+    write_and_feedback(data)
+    log_dump("next")
 
 
 def specified_dates():
@@ -92,15 +112,16 @@ def specified_dates():
     start_iso = datetime(int(start_string[-4:]), int(start_string[3:5]), int(start_string[:2]))
     finish_iso = datetime(int(finish_string[-4:]), int(finish_string[3:5]), int(finish_string[:2]), 23, 59)
 
-    data = db.specified_dates(start_iso, finish_iso)
-    feedback(data)
+    query = {"datetime": {"$gte": start_iso, "$lte": finish_iso}}
+    data = db.get_data(query)
+    write_and_feedback(data)
     log_dump("date")
 
 
 instruction = Label(root, text="Please Select:")
 instruction.grid(row=2, column=1, columnspan=3)
 
-button1 = Button(root, text="Since Last Dump", width=15)
+button1 = Button(root, text="Since Last Dump", width=15, command=since_last_dump)
 button1.grid(row=3, column=1, padx=25)
 
 button2 = Button(root, text="Specify Dates", width=15, command=show_datepickers)

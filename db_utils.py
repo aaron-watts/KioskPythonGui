@@ -33,16 +33,7 @@ def get_data(query):
             {"name": name, "dob": dob, "address": address}
         )
     return attendance_records
-
-def all_attendances():
-    query = {}
-    return get_data(query)
-
-def specified_dates(start, finish):
-    query = {"datetime": {"$gte": start, "$lte": finish}}
-    return get_data(query)
     
-
 # Add dump to database
 def record_dump(dump_type, dump_date):
     try:
@@ -55,3 +46,12 @@ def record_dump(dump_type, dump_date):
         return dump_id
     except:
         return 0
+
+def get_last_dump():
+    dump_list = []
+    dumps = dumps_collection.find({"dumpType":"next"}).sort("dumpDate")
+    for dump in dumps:
+        dump_list.append(dump)
+    if not len(dump_list):
+        return 0
+    return dump_list[-1]['dumpDate']
