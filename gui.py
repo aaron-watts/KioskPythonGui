@@ -10,7 +10,6 @@ root = Tk()
 root.title("Data Dump")
 root.geometry("600x600")
 
-
 def show_datepickers():
     now = datetime.now()
     start_cal = Calendar(
@@ -36,20 +35,30 @@ def show_datepickers():
     end_label = Label(root, text="Until:")
     end_label.grid(row=5, column=1, sticky=NE)
 
+def log_dump(dump_type):
+    dump_id = db.record_dump(dump_type, datetime.now())
+    if dump_id:
+        dump_feedback = f'Dump Recorded: {dump_id}!'
+    else:
+        dump_feedback = "Error: db.record_dump"
+    dump_display = Label(root, text=dump_feedback)
+    dump_display.grid(row=8, column=1, columnspan=3)
 
 def fetch_all():
     data = db.all_attendances()
     if file_export.write_to_csv(data):
-        message = Label(root, text="Attendance Sheet Created!")
+        csv_feedback = "Atendance Sheet Created!"
     else:
-        message = Label(root, text="Something Went Wrong!")
-    message.grid(row=6, column=1)
+        csv_feedback = "Error: file_export.write_to_csv(data)"
+    csv_display = Label(root, text=csv_feedback)
+    csv_display.grid(row=6, column=1, columnspan=3)
     if file_export.write_to_html(data):
-        message1 = Label(root, text="Attendance Page Created!")
+        html_feedback = "Attendance Page Created!"
     else:
-        message1 = Label(root, text="Something Went Wrong!")
-    message1.grid(row=7, column=1)
-
+        html_feedback = "Error: file_export.write_to_html"
+    html_display = Label(root, text=html_feedback)
+    html_display.grid(row=7, column=1, columnspan=3)
+    log_dump('all')
 
 instruction = Label(root, text="Please Select:")
 instruction.grid(row=2, column=1, columnspan=3)

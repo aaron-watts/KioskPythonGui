@@ -8,6 +8,7 @@ client = MongoClient("mongodb://localhost:27017/")
 db = client.registerApp
 members_collection = db.members
 attendances_collection = db.attendances
+dumps_collection = db.dumps
 
 # IDs must be formatted with bson.objectId to yield results
 # any_id = ObjectId(attendances_collection.find_one({})['member'])
@@ -30,3 +31,16 @@ def all_attendances():
             {"name": name, "dob": dob, "address": address}
         )
     return attendance_records
+
+# Add dump to database
+def record_dump(dump_type, dump_date):
+    try:
+        new_dump = {
+            "dumpType": dump_type,
+            "dumpDate": dump_date
+        }
+        dump_id = dumps_collection.insert_one(new_dump).inserted_id
+        print(dump_id)
+        return dump_id
+    except:
+        return 0
