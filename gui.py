@@ -48,24 +48,38 @@ def close_datepicker():
     confirm_button.destroy()
 
 def disable_buttons():
-    button1.config(state="disabled")
-    button2.config(state="disabled")
-    button3.config(state="disabled")
+    since_last_button.config(state="disabled")
+    specify_dates_button.config(state="disabled")
+    all_data_button.config(state="disabled")
 
-def write_and_feedback(data):
-    if file_export.write_to_csv(data):
-        csv_feedback = "Atendance Sheet Created!"
+def write_and_feedback(attendance_data, member_data):
+    if file_export.write_attendance_csv(attendance_data):
+        attendance_csv_feedback = "Atendance Sheet Created!"
     else:
-        csv_feedback = "Error: file_export.write_to_csv(data)"
-    csv_display = Label(root, text=csv_feedback)
-    csv_display.grid(row=6, column=1, columnspan=3)
+        attendance_csv_feedback = "Error: file_export.write_attendance_csv(attendance_data)"
+    attendance_csv_label = Label(root, text=attendance_csv_feedback)
+    attendance_csv_label.grid(row=6, column=1, columnspan=3)
 
-    if file_export.write_to_html(data):
-        html_feedback = "Attendance Page Created!"
+    if file_export.write_attendance_html(attendance_data):
+        attendance_html_feedback = "Attendance Page Created!"
     else:
-        html_feedback = "Error: file_export.write_to_html"
-    html_display = Label(root, text=html_feedback)
-    html_display.grid(row=7, column=1, columnspan=3)
+        attendance_html_feedback = "Error: file_export.write_attendance_html(attendance_data)"
+    attendance_html_label = Label(root, text=attendance_html_feedback)
+    attendance_html_label.grid(row=7, column=1, columnspan=3)
+
+    if file_export.write_members_csv(member_data):
+        member_csv_feedback = "Members Sheet Created!"
+    else:
+        member_csv_feedback = "Error: file_export.write_members_csv(member_data)"
+    member_csv_label = Label(root, text=member_csv_feedback)
+    member_csv_label.grid(row=8, column=1, columnspan=3)
+
+    if file_export.write_members_html(member_data):
+        member_html_feedback = "Members Page Created!"
+    else:
+        member_html_feedback = "Error: file.export.write_members_html(member_data)"
+    member_html_label = Label(root, text=member_html_feedback)
+    member_html_label.grid(row=9, column=1, columnspan=3)
 
 
 def log_dump(dump_type):
@@ -75,13 +89,16 @@ def log_dump(dump_type):
     else:
         dump_feedback = "Error: db.record_dump"
     dump_display = Label(root, text=dump_feedback)
-    dump_display.grid(row=8, column=1, columnspan=3)
+    dump_display.grid(row=10, column=1, columnspan=3)
 
 
 def fetch_all():
     disable_buttons()
-    data = db.get_data({})
-    write_and_feedback(data)
+    
+    attendance_data = db.get_atendance_data({})
+    member_data = db.get_member_data({})
+
+    write_and_feedback(attendance_data, member_data)
     log_dump("all")
 
 
@@ -94,11 +111,15 @@ def since_last_dump():
             int(last_dump.strftime("%m")), 
             int(last_dump.strftime("%d"))
             )
-        query = {"datetime": {"$gte": dump_date}}
-        data = db.get_data(query)
+        attendance_query = {"datetime": {"$gte": dump_date}}
+        members_query = {"dateJoined": {"$gte": dump_date}}
+        attendance_data = db.get_atendance_data(attendance_query)
+        member_data = db.get_member_data(members_query)
     else:
-        data = db.get_data({})
-    write_and_feedback(data)
+        attendance_data = db.get_atendance_data({})
+        member_data = db.get_member_data({})
+
+    write_and_feedback(attendance_data, member_data)
     log_dump("next")
 
 
@@ -112,22 +133,25 @@ def specified_dates():
     start_iso = datetime(int(start_string[-4:]), int(start_string[3:5]), int(start_string[:2]))
     finish_iso = datetime(int(finish_string[-4:]), int(finish_string[3:5]), int(finish_string[:2]), 23, 59)
 
-    query = {"datetime": {"$gte": start_iso, "$lte": finish_iso}}
-    data = db.get_data(query)
-    write_and_feedback(data)
+    attendance_query = {"datetime": {"$gte": start_iso, "$lte": finish_iso}}
+    member_query = {"dateJoined": {"$gte": start_iso, "$lte": finish_iso}}
+    attendance_data = db.get_atendance_data(attendance_query)
+    member_data = db.get_member_data(member_query)
+
+    write_and_feedback(attendance_data, member_data)
     log_dump("date")
 
 
 instruction = Label(root, text="Please Select:")
 instruction.grid(row=2, column=1, columnspan=3)
 
-button1 = Button(root, text="Since Last Dump", width=15, command=since_last_dump)
-button1.grid(row=3, column=1, padx=25)
+since_last_button = Button(root, text="Since Last Dump", width=15, command=since_last_dump)
+since_last_button.grid(row=3, column=1, padx=25)
 
-button2 = Button(root, text="Specify Dates", width=15, command=show_datepickers)
-button2.grid(row=3, column=2, padx=25)
+specify_dates_button = Button(root, text="Specify Dates", width=15, command=show_datepickers)
+specify_dates_button.grid(row=3, column=2, padx=25)
 
-button3 = Button(root, text="All Data (Slow!)", width=15, command=fetch_all)
-button3.grid(row=3, column=3, padx=25)
+all_data_button = Button(root, text="All Data (Slow!)", width=15, command=fetch_all)
+all_data_button.grid(row=3, column=3, padx=25)
 
 root.mainloop()

@@ -14,7 +14,7 @@ dumps_collection = db.dumps
 # any_id = ObjectId(attendances_collection.find_one({})['member'])
 # print(members_collection.find_one({"_id": any_id})["firstName"])
 
-def get_data(query):
+def get_atendance_data(query):
     attendance_records = {}
     for attendance in attendances_collection.find(query):
         # populate members
@@ -33,6 +33,12 @@ def get_data(query):
             {"name": name, "dob": dob, "address": address}
         )
     return attendance_records
+
+def get_member_data(query):
+    member_records = []
+    for member in members_collection.find(query):
+        member_records.append(member)
+    return member_records
     
 # Add dump to database
 def record_dump(dump_type, dump_date):
