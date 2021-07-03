@@ -12,8 +12,8 @@ root.geometry("600x600")
 
 
 def show_datepickers():
-    disable_buttons()
-    global start_cal, end_cal, confirm_button, start_label, end_label
+    button_state('disabled')
+    global start_cal, end_cal, confirm_button, start_label, end_label, cancel_button
     now = datetime.now()
     start_cal = Calendar(
         root,
@@ -23,9 +23,9 @@ def show_datepickers():
         month=now.month,
         day=now.day,
     )
-    start_cal.grid(row=4, column=2, columnspan=2, sticky=W)
-    start_label = Label(root, text="From:")
-    start_label.grid(row=4, column=1, sticky=NE)
+    start_cal.grid(row=5, column=1, columnspan=3)
+    start_label = Label(root, text="From")
+    start_label.grid(row=4, column=1, columnspan=3, pady=5)
     end_cal = Calendar(
         root,
         font=("DejaVu Sans", 11),
@@ -34,11 +34,20 @@ def show_datepickers():
         month=now.month,
         day=now.day,
     )
-    end_cal.grid(row=5, column=2, columnspan=2, sticky=W)
-    end_label = Label(root, text="Until:")
-    end_label.grid(row=5, column=1, sticky=NE)
-    confirm_button = Button(root, text="Get Data", width=15, command=specified_dates)
-    confirm_button.grid(row=6, column=2, padx=25)
+    end_cal.grid(row=7, column=1, columnspan=3)
+    end_label = Label(root, text="Until")
+    end_label.grid(row=6, column=1, columnspan=3, pady=5)
+    confirm_button = Button(
+        root, text="Get Data", width=15, height=2, command=specified_dates
+    )
+    cancel_button = Button(root, text="Cancel", width=15, height=2, command=cancel_datepicker)
+    confirm_button.grid(row=8, column=3, padx=25, pady=14)
+    cancel_button.grid(row=8, column=1, padx=25, pady=14)
+
+def cancel_datepicker():
+    close_datepicker()
+    button_state('normal')
+    
 
 def close_datepicker():
     start_cal.destroy()
@@ -46,40 +55,47 @@ def close_datepicker():
     start_label.destroy()
     end_label.destroy()
     confirm_button.destroy()
+    cancel_button.destroy()
 
-def disable_buttons():
-    since_last_button.config(state="disabled")
-    specify_dates_button.config(state="disabled")
-    all_data_button.config(state="disabled")
+
+def button_state(state):
+    since_last_button.config(state=state)
+    specify_dates_button.config(state=state)
+    all_data_button.config(state=state)
+
 
 def write_and_feedback(attendance_data, member_data):
     if file_export.write_attendance_csv(attendance_data):
         attendance_csv_feedback = "Atendance Sheet Created!"
     else:
-        attendance_csv_feedback = "Error: file_export.write_attendance_csv(attendance_data)"
+        attendance_csv_feedback = (
+            "Error: file_export.write_attendance_csv(attendance_data)"
+        )
     attendance_csv_label = Label(root, text=attendance_csv_feedback)
-    attendance_csv_label.grid(row=6, column=1, columnspan=3)
+    attendance_csv_label.grid(row=6, column=1, columnspan=3, pady=10)
 
     if file_export.write_attendance_html(attendance_data):
         attendance_html_feedback = "Attendance Page Created!"
     else:
-        attendance_html_feedback = "Error: file_export.write_attendance_html(attendance_data)"
+        attendance_html_feedback = (
+            "Error: file_export.write_attendance_html(attendance_data)"
+        )
     attendance_html_label = Label(root, text=attendance_html_feedback)
-    attendance_html_label.grid(row=7, column=1, columnspan=3)
+    attendance_html_label.grid(row=7, column=1, columnspan=3, pady=10)
 
     if file_export.write_members_csv(member_data):
         member_csv_feedback = "Members Sheet Created!"
     else:
         member_csv_feedback = "Error: file_export.write_members_csv(member_data)"
     member_csv_label = Label(root, text=member_csv_feedback)
-    member_csv_label.grid(row=8, column=1, columnspan=3)
+    member_csv_label.grid(row=8, column=1, columnspan=3, pady=10)
 
     if file_export.write_members_html(member_data):
         member_html_feedback = "Members Page Created!"
     else:
         member_html_feedback = "Error: file.export.write_members_html(member_data)"
     member_html_label = Label(root, text=member_html_feedback)
-    member_html_label.grid(row=9, column=1, columnspan=3)
+    member_html_label.grid(row=9, column=1, columnspan=3, pady=10)
 
 
 def log_dump(dump_type):
@@ -93,8 +109,8 @@ def log_dump(dump_type):
 
 
 def fetch_all():
-    disable_buttons()
-    
+    button_state('disabled')
+
     attendance_data = db.get_atendance_data({})
     member_data = db.get_member_data({})
 
@@ -103,14 +119,14 @@ def fetch_all():
 
 
 def since_last_dump():
-    disable_buttons()
+    button_state('disabled')
     last_dump = db.get_last_dump()
     if last_dump:
         dump_date = datetime(
-            int(last_dump.strftime("%Y")), 
-            int(last_dump.strftime("%m")), 
-            int(last_dump.strftime("%d"))
-            )
+            int(last_dump.strftime("%Y")),
+            int(last_dump.strftime("%m")),
+            int(last_dump.strftime("%d")),
+        )
         attendance_query = {"datetime": {"$gte": dump_date}}
         members_query = {"dateJoined": {"$gte": dump_date}}
         attendance_data = db.get_atendance_data(attendance_query)
@@ -124,14 +140,18 @@ def since_last_dump():
 
 
 def specified_dates():
-    #get date
+    # get date
     start_string = start_cal.get_date()
     finish_string = end_cal.get_date()
-    
+
     close_datepicker()
-    #format date
-    start_iso = datetime(int(start_string[-4:]), int(start_string[3:5]), int(start_string[:2]))
-    finish_iso = datetime(int(finish_string[-4:]), int(finish_string[3:5]), int(finish_string[:2]), 23, 59)
+    # format date
+    start_iso = datetime(
+        int(start_string[-4:]), int(start_string[3:5]), int(start_string[:2])
+    )
+    finish_iso = datetime(
+        int(finish_string[-4:]), int(finish_string[3:5]), int(finish_string[:2]), 23, 59
+    )
 
     attendance_query = {"datetime": {"$gte": start_iso, "$lte": finish_iso}}
     member_query = {"dateJoined": {"$gte": start_iso, "$lte": finish_iso}}
@@ -142,16 +162,19 @@ def specified_dates():
     log_dump("date")
 
 
-instruction = Label(root, text="Please Select:")
-instruction.grid(row=2, column=1, columnspan=3)
+since_last_button = Button(
+    root, text="Since Last Dump", width=15, height=2, command=since_last_dump
+)
+since_last_button.grid(row=3, column=1, padx=25, pady=14)
 
-since_last_button = Button(root, text="Since Last Dump", width=15, command=since_last_dump)
-since_last_button.grid(row=3, column=1, padx=25)
+specify_dates_button = Button(
+    root, text="Specify Dates", width=15, height=2, command=show_datepickers
+)
+specify_dates_button.grid(row=3, column=2, padx=25, pady=14)
 
-specify_dates_button = Button(root, text="Specify Dates", width=15, command=show_datepickers)
-specify_dates_button.grid(row=3, column=2, padx=25)
-
-all_data_button = Button(root, text="All Data (Slow!)", width=15, command=fetch_all)
-all_data_button.grid(row=3, column=3, padx=25)
+all_data_button = Button(
+    root, text="All Data (Slow!)", width=15, height=2, command=fetch_all
+)
+all_data_button.grid(row=3, column=3, padx=25, pady=14)
 
 root.mainloop()
