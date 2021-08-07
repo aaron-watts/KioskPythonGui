@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# just some comments for git practise
+# blah blah blah
+
 from tkinter import *
 from tkcalendar import *
 from datetime import datetime
